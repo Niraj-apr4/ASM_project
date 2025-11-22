@@ -5,7 +5,7 @@ using LinearAlgebra
 ######################
 # STEP 1 create mesh # 
 ######################
-n = 7 
+n = 100 
 L = 10 
 H = 5 
 sx = 1 

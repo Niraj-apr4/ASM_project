@@ -5,7 +5,7 @@ using LinearAlgebra
 ######################
 # STEP 1 create mesh # 
 ######################
-n = 50 
+n = 7 
 L = 10 
 H = 5 
 sx = 1 
@@ -21,8 +21,28 @@ Mass = 2.5
 natural_length_x = norm(points[1,2][1:2]-points[1,1][1:2])
 natural_length_y = norm(points[2,1][1:2]-points[1,1][1:2])
 
-function calculate_nodes!(i, j, dt)
+# ========== CHANGE 1: Add magnetic field parameters ==========
+# Magnetic field strength (Tesla)
+B_strength = 0.5
+
+# Magnetization susceptibility (dimensionless, how material responds to field)
+chi = 2.0
+
+# Magnetic field frequency for time-varying actuation (Hz)
+B_frequency = 1.0
+
+# Direction of magnetic force: [x_direction, y_direction] normalized
+# Example: [0, -1] means downward, [1, 0] means rightward
+B_direction = [0.0, -1.0]  # Downward actuation
+# ========== END CHANGE 1 ==========
+
+function calculate_nodes!(i, j, dt, t)
+    # ========== CHANGE 2: Added time parameter 't' to function ==========
+    # This allows calculation of time-varying magnetic field
+    # ========== END CHANGE 2 ==========
+    
     global natural_length_x, K, C, Mass, natural_length_y
+    global B_strength, chi, B_frequency, B_direction
     
     # current node
     p = points[i, j]
@@ -75,6 +95,20 @@ function calculate_nodes!(i, j, dt)
     new_acc_y = (K * del_north - K * del_south - C * (vel_north[2] - vel_p[2]) - 
                  C * (vel_p[2] - vel_south[2])) / Mass
     
+    # ========== CHANGE 3: Add magnetic force contribution ==========
+    # Calculate time-varying magnetic field strength
+    B_t = B_strength * sin(2 * π * B_frequency * t)
+    
+    # Calculate magnetic force: F_mag = chi * B^2 * B_direction
+    # This assumes magnetization aligned with field direction
+    F_mag_x = chi * B_t^2 * B_direction[1]
+    F_mag_y = chi * B_t^2 * B_direction[2]
+    
+    # Add magnetic force to acceleration (divide by mass to get acceleration)
+    new_acc_x += F_mag_x / Mass
+    new_acc_y += F_mag_y / Mass
+    # ========== END CHANGE 3 ==========
+    
     # Update velocity and position
     new_vel_x = vel_p[1] + new_acc_x * dt
     new_pos_x = pos_p[1] + new_vel_x * dt
@@ -113,21 +147,30 @@ apply_fixed_left_boundary!()
 ######################
 dt = 0.01
 num_steps = 500
+t = 0.0  # ========== CHANGE 4: Initialize time variable ==========
 
 for step in 1:num_steps
+    # ========== CHANGE 5: Pass current time 't' to calculate_nodes! ==========
     for i = 2:n, j = 1:n
-        calculate_nodes!(i, j, dt)
+        calculate_nodes!(i, j, dt, t)
     end
+    # ========== END CHANGE 5 ==========
+    
     apply_fixed_left_boundary!()
+    
+    # ========== CHANGE 6: Increment time at each step ==========
+    t += dt
+    # ========== END CHANGE 6 ==========
     
     # Print progress every 50 steps
     if mod(step, 50) == 0
-        println("Step $step / $num_steps")
+        println("Step $step / $num_steps, Time: $t s, B(t): $(0.5 * sin(2 * π * 1.0 * t))")
     end
 end
 
 println("Simulation complete!")
-
-# Visualize final mesh
-plot_mesh_grid(points, "Magnetoelastic Fluid Beam - Final State")
-create_beam_animation(500, 5, "magnetoelastic_beam_animation.mp4")
+println("Final magnetic parameters used:")
+println("  B_strength: $B_strength")
+println("  chi (susceptibility): $chi")
+println("  B_frequency: $B_frequency Hz")
+println("  B_direction: $B_direction")

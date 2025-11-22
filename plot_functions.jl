@@ -213,3 +213,107 @@ function create_beam_animation(num_steps, frame_interval, filename="magnetoelast
     mp4(anim, filename, fps=20)
     println("Animation saved as '$filename'")
 end
+using Plots
+
+function plot_mesh_snapshots(num_steps,t, num_snapshots, output_dir="./mesh_snapshots/")
+    """
+    Plot mesh grid at discrete time steps and save as PNG files
+    
+    Parameters:
+    - num_steps: total simulation steps
+    - num_snapshots: number of snapshots to capture (e.g., 5)
+    - output_dir: directory to save PNG files
+    
+    Usage:
+    plot_mesh_snapshots(500, 5, "./mesh_snapshots/")
+    """
+    
+    # Create output directory if it doesn't exist
+    if !isdir(output_dir)
+        mkdir(output_dir)
+    end
+    
+    # Calculate which steps to save (evenly distributed)
+    snapshot_steps = round.(Int, range(1, num_steps, length=num_snapshots))
+    snapshot_index = 1
+    next_snapshot_step = snapshot_steps[snapshot_index]
+    
+    # Store snapshots for later plotting
+    snapshots = []
+    snapshot_times = []
+    
+    for step in 1:num_steps
+        # Update nodes
+        for i = 2:n, j = 1:n
+            calculate_nodes!(i, j, dt, t)
+        end
+        apply_fixed_left_boundary!()
+        
+        t += dt
+        
+        # Check if this is a snapshot step
+        if step == next_snapshot_step && snapshot_index <= num_snapshots
+            # Extract current mesh positions
+            rows, cols = size(points)
+            positions = zeros(2, rows, cols)
+            
+            for i in 1:rows, j in 1:cols
+                positions[1, i, j] = points[i, j][1]
+                positions[2, i, j] = points[i, j][2]
+            end
+            
+            # Store snapshot and time
+            push!(snapshots, deepcopy(positions))
+            push!(snapshot_times, t)
+            
+            println("Snapshot $snapshot_index / $num_snapshots captured at step $step, time: $(round(t, digits=3)) s")
+            
+            snapshot_index += 1
+            if snapshot_index <= num_snapshots
+                next_snapshot_step = snapshot_steps[snapshot_index]
+            end
+        end
+    end
+    
+    # Now plot and save each snapshot
+    for idx in 1:length(snapshots)
+        positions = snapshots[idx]
+        time_val = snapshot_times[idx]
+        rows, cols = size(points)
+        
+        # Create plot
+        p = plot(legend=false, aspect_ratio=:equal, 
+                 title="Magnetoelastic Fluid Beam - Time: $(round(time_val, digits=3)) s",
+                 xlim=(-0.5, L+0.5), ylim=(-0.5, H+0.5), size=(1400, 900))
+        
+        # Plot horizontal grid lines
+        for i in 1:rows
+            plot!(p, positions[1, i, :], positions[2, i, :], 
+                  linewidth=2, color=:blue, alpha=0.7)
+        end
+        
+        # Plot vertical grid lines
+        for j in 1:cols
+            plot!(p, positions[1, :, j], positions[2, :, j], 
+                  linewidth=2, color=:blue, alpha=0.7)
+        end
+        
+        # Plot nodes
+        scatter!(p, vec(positions[1, :, :]), vec(positions[2, :, :]), 
+                 markersize=6, color=:red, alpha=0.8)
+        
+        # Highlight fixed boundary
+        scatter!(p, positions[1, 1, :], positions[2, 1, :], 
+                 markersize=8, color=:green, alpha=0.9)
+        
+        xlabel!("X")
+        ylabel!("Y")
+        
+        # Save as PNG
+        filename = joinpath(output_dir, "mesh_snapshot_$(idx).png")
+        savefig(p, filename)
+        println("Saved: $filename")
+    end
+    
+    println("\nAll snapshots saved to: $output_dir")
+end
