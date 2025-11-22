@@ -6,7 +6,7 @@ using LinearAlgebra
 ######################
 # STEP 1 create mesh # 
 ######################
-n = 7 
+n = 10 
 L = 10 
 H = 5 
 sx = 1 
@@ -17,16 +17,19 @@ points = generate_2Dmesh(L,H,n,sx,sy)
 # plot_mesh(points)
 
 # properties
-K = 10
-C = 5
-Mass = 2
+K = 15        # Low stiffness for fluid elasticity
+C = 10        # Higher damping for viscosity
+total_mass = 2.2   # Slightly higher density
+
+mass_nodes = total_mass/n^2 
+
 
 # calculate natural length
 natural_length_x = norm(points[1,2][1:2]-points[1,1][1:2])
 natural_length_y = norm(points[2,1][1:2]-points[1,1][1:2])
 
 function calculate_nodes!(i, j, dt)
-    global natural_length_x, K, C, Mass, natural_length_y
+    global natural_length_x, K, C, mass_nodes, natural_length_y
     
     # current node
     p = points[i, j]
@@ -75,11 +78,11 @@ function calculate_nodes!(i, j, dt)
     
     # Calculate new acceleration in x direction
     new_acc_x = (K * del_east - K*del_west - C* (vel_east[1] - vel_p[1]) - 
-                 C * (vel_p[1] -  vel_west[1])) / Mass
+                 C * (vel_p[1] -  vel_west[1])) / mass_nodes
     
     # Calculate new acceleration in y direction
     new_acc_y = (K * del_north - K * del_south - C* (vel_north[2]
-               - vel_p[2]) - C* (vel_p[2] - vel_south[2])) / Mass
+               - vel_p[2]) - C* (vel_p[2] - vel_south[2])) / mass_nodes
     
     # Update velocity and position
     new_vel_x = vel_p[1] + new_acc_x * dt
@@ -93,10 +96,35 @@ function calculate_nodes!(i, j, dt)
                     new_acc_x, new_acc_y]
 end
 
-# initial conditon 
+function apply_fixed_left_boundary!()
+    """
+    Apply fixed boundary condition to the left edge (i=1).
+    All nodes on the left edge (i=1) are fixed:
+    - Position remains constant
+    - Velocity set to zero
+    - Acceleration set to zero
+    """
+    rows, cols = size(points)
+    
+    for j in 1:cols
+        # Store the initial position
+        x_fixed = points[1, j][1]
+        y_fixed = points[1, j][2]
+        
+        # Set position, velocity, and acceleration
+        points[1, j] = [x_fixed, y_fixed, 0.0, 0.0, 0.0, 0.0]
+    end
+end
 
-dt = 0.001
-#iterate across all nodes
-for i = 1:n, j = 1:n
+# # Set initial conditions first
+# points[end,1][1] = points[end,1][1] + 1
+# points[end,1][2] = points[end,1][1] + 1
+# points[end,1][3] = points[end,1][1] + 1
+
+# Apply boundary condition to freeze left edge
+apply_fixed_left_boundary!()
+
+dt = 0.1
+for i = 2:n, j = 1:n
     calculate_nodes!(i, j, dt)
 end

@@ -111,3 +111,105 @@ function plot_error(error_trial, counter_array)
     display(plt)
     return plt
 end
+
+function plot_mesh_grid(points, title_str="Mesh Grid")
+    rows, cols = size(points)
+    
+    # Extract positions and velocities
+    positions = zeros(2, rows, cols)
+    velocities = zeros(2, rows, cols)
+    
+    for i in 1:rows, j in 1:cols
+        positions[1, i, j] = points[i, j][1]
+        positions[2, i, j] = points[i, j][2]
+        velocities[1, i, j] = points[i, j][3]
+        velocities[2, i, j] = points[i, j][4]
+    end
+    
+    # Create plot
+    p = plot(legend=false, aspect_ratio=:equal, title=title_str)
+    
+    # Plot grid lines (horizontal)
+    for i in 1:rows
+        x_vals = positions[1, i, :]
+        y_vals = positions[2, i, :]
+        plot!(p, x_vals, y_vals, linewidth=2, color=:blue, alpha=0.7)
+    end
+    
+    # Plot grid lines (vertical)
+    for j in 1:cols
+        x_vals = positions[1, :, j]
+        y_vals = positions[2, :, j]
+        plot!(p, x_vals, y_vals, linewidth=2, color=:blue, alpha=0.7)
+    end
+    
+    # Plot nodes as scatter points
+    x_nodes = vec(positions[1, :, :])
+    y_nodes = vec(positions[2, :, :])
+    scatter!(p, x_nodes, y_nodes, markersize=6, color=:red, alpha=0.8)
+    
+    xlabel!("X")
+    ylabel!("Y")
+    return p
+end
+
+function create_beam_animation(num_steps, frame_interval, filename="magnetoelastic_beam_animation.mp4")
+    """
+    Create animation of magnetoelastic beam simulation
+    
+    Parameters:
+    - num_steps: total simulation steps
+    - frame_interval: save frame every N steps
+    - filename: output MP4 filename
+    """
+    
+    anim = @animate for step in 1:num_steps
+        # Update nodes
+        for i = 2:n, j = 1:n
+            calculate_nodes!(i, j, dt)
+        end
+        apply_fixed_left_boundary!()
+        
+        # Save frame every frame_interval steps
+        if mod(step, frame_interval) == 0
+            rows, cols = size(points)
+            positions = zeros(2, rows, cols)
+            
+            for i in 1:rows, j in 1:cols
+                positions[1, i, j] = points[i, j][1]
+                positions[2, i, j] = points[i, j][2]
+            end
+            
+            p = plot(legend=false, aspect_ratio=:equal, 
+                     title="Magnetoelastic Fluid Beam - Step: $step",
+                     xlim=(-0.5, L+0.5), ylim=(-0.5, H+0.5), size=(1400, 900))
+            
+            # Plot horizontal grid lines
+            for i in 1:rows
+                plot!(p, positions[1, i, :], positions[2, i, :], 
+                      linewidth=2, color=:blue, alpha=0.7)
+            end
+            
+            # Plot vertical grid lines
+            for j in 1:cols
+                plot!(p, positions[1, :, j], positions[2, :, j], 
+                      linewidth=2, color=:blue, alpha=0.7)
+            end
+            
+            # Plot nodes
+            scatter!(p, vec(positions[1, :, :]), vec(positions[2, :, :]), 
+                     markersize=6, color=:red, alpha=0.8)
+            
+            # Highlight fixed boundary
+            scatter!(p, positions[1, 1, :], positions[2, 1, :], 
+                     markersize=8, color=:green, alpha=0.9)
+            
+            xlabel!("X")
+            ylabel!("Y")
+        end
+    end
+    
+    # Save animation
+    mp4(anim, filename, fps=20)
+    println("Animation saved as '$filename'")
+end
