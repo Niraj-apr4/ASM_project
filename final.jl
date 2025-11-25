@@ -9,8 +9,8 @@ edges = [[i, i+1] for i in 1:n_nodes-1]
 # Material properties
 k_spring = 1e4
 damping = 0.9
-B_field = [2.0, 1.0]
-mag_moment = 20.0
+B_field = [1.0, 1.0]
+mag_moment = [10,20,30,40,50,60,70,80,90,100]
 fixed_nodes = [1]
 
 # Simulation parameters

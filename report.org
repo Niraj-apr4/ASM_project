@@ -30,7 +30,16 @@ q^{.}(t_{k+1}) &= q^{.}_{t_k} + q^{..}(t_{k+1}) dt \\
 ** Numerical Framework
 ** Implementations
 *** 1D line element
-[[./1d_line.png]]
+- Details of the simulation
+  1. Magnetic Field [1.0,1.0]
+     [[./1d_sample1.png]]
+  2. Magnetic Field [-1.0 ,1.0]
+     [[./1d_sample2.png]]
+  3. Magnetic Field [1.0, -1.0]
+     [[./1d_sample3.png]]
+  4. Magnetic Field [-1.0, -1.0]
+     [[./1d_sample4.png]]
+
 * 2D implementations
 ** Computational nodes
 following Assumptions has been made

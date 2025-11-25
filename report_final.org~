@@ -1,0 +1,246 @@
+#+TITLE: Cantilever Beam Simulation with Magnetic Actuation
+#+AUTHOR:
+#+DATE:
+#+OPTIONS: toc:t num:t
+
+* Introduction
+
+* Discrete Differential Geometry Method
+
+* Numerical Modeling of Structure
+
+The dynamics of the system is governed by the second-order differential equation:
+
+\[ M\ddot{q} + C\dot{q} + Kq(t) = F^{\text{ext}}(t) \]
+
+where:
+- $M$ :: Lumped Mass Matrix
+- $C$ :: Damping Coefficient  
+- $K$ :: Spring Constant
+
+and $\ddot{q}(t)$, $\dot{q}(t)$, $q(t)$ represent acceleration, velocity, and position respectively.
+
+** Magnetic Actuation
+
+The magnetic force acting on the beam is given by:
+
+\[F_{\text{magnetic}} = \chi B(t)^2 \cdot \mathbf{B}_{\text{direction}} \]
+
+where:
+- $\chi$ :: Magnetic susceptibility of the material
+- $B(t)$ :: Time-dependent magnetic field strength given by $B(t) = B_{\text{strength}} \sin(2\pi f t)$, where $f$ is the driving frequency
+- $\mathbf{B}_{\text{direction}}$ :: Unit vector specifying the direction of the magnetic field
+
+** Solution by Implicit Euler Method
+
+The time integration is performed using the implicit Euler scheme:
+
+\begin{align*}
+q(t_{k+1}) &= q(t_k) + \dot{q}(t_{k+1}) \Delta t \\
+\dot{q}(t_{k+1}) &= \dot{q}(t_k) + \ddot{q}(t_{k+1}) \Delta t
+\end{align*}
+
+where $\Delta t$ is the timestep and subscripts $k$ and $k+1$ denote the current and next time levels respectively.
+
+* 1D Implementations
+
+** Numerical Framework
+
+*** Physical Model and Discretization
+
+The 1D cantilever beam is discretized using the lumped mass method, wherein the continuous beam structure is approximated as a system of $n = 11$ discrete point masses interconnected by linear spring-damper elements.
+
+*Spatial Discretization:*
+Nodes are uniformly distributed along the x-axis from the clamped end at $x = 0$ to the free end at $x = L_0 = 1.0$ m, with nodal spacing $\Delta x = 0.1$ m. Each node $i$ possesses the following state variables:
+
+- Displacement: $\mathbf{q}_i(t) \in \mathbb{R}^2$
+- Velocity: $\dot{\mathbf{q}}_i(t) = d\mathbf{q}_i/dt \in \mathbb{R}^2$
+- Lumped mass: $m_i = 1.0$ kg
+
+*Element Connectivity:*
+Adjacent nodes are connected by spring-damper elements indexed by the node pairs $(i, i+1)$ for $i = 1, 2, \ldots, 10$, forming 10 linear elements spanning the domain.
+
+*** Force Components and Governing Equations
+
+We need to calculate how the beam moves. To do this, we find all the forces acting on each node, then use Newton's second law (Force = Mass × Acceleration) to find how fast it accelerates.
+
+For each node that can move (not the fixed ones), we write:
+
+$\text{Mass} \times \text{Acceleration} = \text{Spring Force} + \text{Magnetic Force} + \text{Gravity Force}$
+
+Or written simpler:
+
+$m_i a_i = F_{\text{spring}} + F_{\text{mag}} + F_{\text{grav}}$
+
+Now let us look at each of these forces:
+
+*1. Spring Force:*
+
+The spring force is as follows 
+
+$F_{\text{spring}} = k \times \frac{L - L_0}{L} \times \text{direction}$
+
+- $k = 10,000$ N/m is the spring stiffness 
+- $L$ is the current distance between two nodes
+- $L_0 = 0.1$ m is the original distance between two nodes 
+- $L - L_0$ is the change in length (positive if stretched, negative if compressed)
+
+Each node has springs on both sides of it (except the endpoints). For node 5, for example, there is a spring connecting it to node 4 and another spring connecting it to node 6. Both of these springs contribute force to node 5.
+
+*2. Gravitational Force:*
+
+Every node has mass, and mass gets pulled down by gravity. The gravitational force is simple:
+
+$F_{\text{grav}} = m \times g$
+
+where:
+- $m = 1.0$ kg is the mass at each node
+- $g = 9.81$ m/s² is Earth's gravitational acceleration
+- The force points downward (in the negative y-direction)
+
+So each node experiences a downward force of about 9.81 Newtons. This causes the entire beam to sag downward like a real beam would if you looked at it.
+
+*3. Magnetic Force:*
+
+The magnetic force only acts on one node—the last node (node 11) at the free end of the beam. This is where we imagine applying a magnetic field.
+
+$F_{\text{mag}} = \chi \times \text{direction vector}$
+
+where:
+- $\chi = 50$ is the magnetic moment (how strong the magnetic effect is)
+- The direction vector tells us which way the force points (like [1.0, 1.0] means northeast, or [-1.0, -1.0] means southwest)
+
+Unlike gravity which spreads across all nodes, the magnetic force is concentrated at just the tip of the beam. This is like pushing on the free end with your hand.
+
+*** Damping Model
+The Damping Force
+
+$\text{New Velocity} = c_d \times \text{Old Velocity}$
+
+The damping coefficient can range from 0.5 to 1.0:
+- If $c_d = 0.5$, we cut the velocity in half every step. The system loses a lot of energy and the beam quickly settles down.
+- If $c_d = 0.9$, we keep 90% of the velocity each step. Less energy is lost, so the motion continues longer before settling.
+- If $c_d = 1.0$, we don't remove any velocity. The beam will keep oscillating (unrealistic, like no friction).
+
+Damping helps the beam settle to a steady position instead of bouncing up and down forever. It represents real-world energy loss from things like air friction and material deformation.
+
+*** Time Integration Scheme
+
+Now we need to actually move the beam forward in time. We do this step by step, using very small time intervals. Each step follows the same procedure:
+
+*What we know:*
+- Current positions of all nodes
+- Current velocities of all nodes
+- We can calculate forces from the current positions
+
+*What we want to find:*
+- New positions of all nodes
+- New velocities of all nodes
+
+*The algorithm (what the computer does):*
+
+**Step 1 - Calculate Forces**
+For each node, we add up all three types of forces: spring forces from neighboring springs, gravitational force, and magnetic force (if it's the last node). We get a total force for each node.
+
+**Step 2 - Calculate Acceleration**
+Using $F = ma$, we rearrange to get $a = F/m$. We divide the total force by the mass to get the acceleration:
+
+$a = \frac{\text{Total Force}}{\text{Mass}}$
+
+**Step 3 - Update Velocity**
+The velocity changes because of acceleration. We calculate how much it changes in our small time step. If the timestep is $\Delta t = 0.001$ seconds and acceleration is $a$, then:
+
+$\text{New Velocity} = \text{Old Velocity} + a \times \Delta t$
+
+Think of it like this: if you're driving at 10 m/s and accelerate at 5 m/s² for 1 second, your new speed is 10 + 5×1 = 15 m/s.
+
+**Step 4 - Apply Damping**
+Now we apply the energy loss (damping). We multiply the velocity by the damping coefficient:
+
+$\text{Velocity after damping} = c_d \times \text{Velocity before damping}$
+
+**Step 5 - Update Position**
+Now that we have the new velocity, we can calculate how far the node moves in this time step:
+
+$\text{New Position} = \text{Old Position} + \text{Velocity} \times \Delta t$
+
+Again, this is simple: if you're moving at 10 m/s for 1 second, you travel 10×1 = 10 meters.
+
+**Step 6 - Keep the Fixed Node Fixed**
+The first node (node 1) is clamped to the wall, so it never moves. We make sure it stays at its original position [0, 0].
+
+*Repeating the Steps:*
+We repeat this whole procedure 1000 times, moving forward 0.001 seconds each time. After 1000 steps, we have simulated 1.0 second of real time. By the end, the beam has settled into an equilibrium position where the forces balance out.
+
+*** Equilibrium and Steady State
+
+Through the accumulation of damping effects, the system asymptotically approaches an equilibrium configuration wherein nodal velocities diminish and the net force becomes negligible. The equilibrium deflection is determined by the balance among spring restoring forces, distributed gravitational loading, and concentrated magnetic actuation. System parameters control this equilibrium configuration:
+
+- Spring stiffness $k$ governs resistance to deformation
+- Magnetic moment $\chi$ determines actuation magnitude
+- The damping coefficient $c_d$ affects convergence rate but not the final equilibrium state
+
+*** Physical Interpretation of Results
+
+The discrete model exhibits several salient features:
+
+1. *Geometric nonlinearity:* The strain-dependent term $(L - L_0)/L$ in the spring force formulation produces configuration-dependent stiffness, whereby large deformations exhibit increased resistance.
+
+2. *Load coupling:* Concurrent gravitational and magnetic loading induce deflection along their combined resultant direction, with magnitude dependent on relative force magnitudes and structural stiffness.
+
+3. *Parameter sensitivity:* Spring stiffness exhibits primary influence on deflection magnitude, with softer springs ($k = 10^3$ N/m) permitting substantial deformation and stiff springs ($k = 10^5$ N/m) maintaining near-straight configurations.
+
+*Analysis Strategy:* To investigate the beam's response to magnetic actuation from different directions, the magnetic field direction vector $\mathbf{B}_{\text{direction}}$ is varied systematically while maintaining constant field magnitude. This allows characterization of the beam's directional sensitivity and the nonlinear coupling between gravitational and magnetic loading.
+
+** Implementations
+
+The system parameters employed in the 1D analysis are:
+
+| Parameter | Symbol | Value | Unit |
+|-----------+--------+-------+------|
+| Spring stiffness | $k$ | $10^4$ | N/m |
+| Damping coefficient | $c$ | $0.9$ | - |
+| Magnetic susceptibility | $\chi$ | $50$ | - |
+| Node mass | $m_i$ | $1.0$ | kg |
+| Gravity | $g$ | $9.81$ | m/s² |
+| Timestep | $\Delta t$ | $0.001$ | s |
+| Number of nodes | $n$ | $11$ | - |
+| Total simulation time | $T$ | $1.0$ | s |
+| Initial beam length | $L_0$ | $1.0$ | m |
+
+*** Direction 
+    1. Magnetic Field Direction: $[1.0, 1.0]$ (Northeast)
+    #+CAPTION: Beam deflection with northeast magnetic loading
+    [[./1d_sample1.png]]
+    2. Magnetic Field Direction: $[-1.0, 1.0]$ (Northwest)
+    #+CAPTION: Beam deflection with northwest magnetic loading
+    [[./1d_sample2.png]]
+    3. Magnetic Field Direction: $[1.0, -1.0]$ (Southeast)
+    #+CAPTION: Beam deflection with southeast magnetic loading
+    [[./1d_sample3.png]]
+    4. Magnetic Field Direction: $[-1.0, -1.0]$ (Southwest)
+    #+CAPTION: Beam deflection with southwest magnetic loading
+    [[./1d_sample4.png]]
+
+*** Intensity of Magnetic Field
+[[./beam_deflection_all_moments.png]]
+   
+*** Spring stiffness variation: $k \in [10^3, 10^5]$ N/m
+[[./beam_deflection_stiffness_comparison.png]]
+
+*** Damping coefficient sensitivity: $c \in [0.5, 1.0]$ 
+[[./beam_deflection_damping_comparison.png]]
+
+* TODO 2D Implementations
+
+** Computational Nodes
+
+The following assumptions have been made in the 2D structural model:
+- The material is homogeneous and can be modeled as point masses connected to each other by springs and dampers
+- Each node has 2 degrees of freedom in the 2D plane
+- The connectivity follows a regular mesh topology as shown below
+
+#+CAPTION: 2D mesh discretization with point mass and spring-damper model
+[[./2d.png]]
+
+** Plots

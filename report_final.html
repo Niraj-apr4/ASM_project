@@ -1,0 +1,787 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-11-25 Tue 16:25 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cantilever Beam Simulation with Magnetic Actuation</title>
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  pre.src-C\+\+:before { content: 'C++'; }
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'JavaScript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Cantilever Beam Simulation with Magnetic Actuation</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org4dee499">1. Introduction</a></li>
+<li><a href="#org8763754">2. Discrete Differential Geometry Method</a></li>
+<li><a href="#orgcddf8d1">3. Numerical Modeling of Structure</a>
+<ul>
+<li><a href="#org9eb7dd4">3.1. Magnetic Actuation</a></li>
+<li><a href="#org6947d33">3.2. Solution by Implicit Euler Method</a></li>
+</ul>
+</li>
+<li><a href="#org59aef21">4. 1D Implementations</a>
+<ul>
+<li><a href="#org5e5ba2d">4.1. Numerical Framework</a>
+<ul>
+<li><a href="#org773c3a5">4.1.1. Physical Model and Discretization</a></li>
+<li><a href="#orgdef3f86">4.1.2. Force Components and Governing Equations</a></li>
+<li><a href="#org94a9ded">4.1.3. Damping Model</a></li>
+<li><a href="#org9b9182b">4.1.4. Time Integration Scheme</a></li>
+<li><a href="#org63e7028">4.1.5. Equilibrium and Steady State</a></li>
+<li><a href="#orgfb7fd32">4.1.6. Physical Interpretation of Results</a></li>
+</ul>
+</li>
+<li><a href="#orgeab0352">4.2. Implementations</a>
+<ul>
+<li><a href="#orgd195042">4.2.1. Direction</a></li>
+<li><a href="#orga3a3696">4.2.2. Intensity of Magnetic Field</a></li>
+<li><a href="#org4a657b3">4.2.3. Spring stiffness variation: \(k \in [10^3, 10^5]\) N/m</a></li>
+<li><a href="#org9b822ad">4.2.4. Damping coefficient sensitivity: \(c \in [0.5, 1.0]\)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org86fd6f8">5. <span class="todo TODO">TODO</span> 2D Implementations</a>
+<ul>
+<li><a href="#org4256afe">5.1. Computational Nodes</a></li>
+<li><a href="#orgc3511e6">5.2. Plots</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org4dee499" class="outline-2">
+<h2 id="org4dee499"><span class="section-number-2">1.</span> Introduction</h2>
+</div>
+
+<div id="outline-container-org8763754" class="outline-2">
+<h2 id="org8763754"><span class="section-number-2">2.</span> Discrete Differential Geometry Method</h2>
+</div>
+
+<div id="outline-container-orgcddf8d1" class="outline-2">
+<h2 id="orgcddf8d1"><span class="section-number-2">3.</span> Numerical Modeling of Structure</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+The dynamics of the system is governed by the second-order differential equation:
+</p>
+
+<p>
+\[ M\ddot{q} + C\dot{q} + Kq(t) = F^{\text{ext}}(t) \]
+</p>
+
+<p>
+where:
+</p>
+<dl class="org-dl">
+<dt>\(M\)</dt><dd>Lumped Mass Matrix</dd>
+<dt>\(C\)</dt><dd>Damping Coefficient</dd>
+<dt>\(K\)</dt><dd>Spring Constant</dd>
+</dl>
+
+<p>
+and \(\ddot{q}(t)\), \(\dot{q}(t)\), \(q(t)\) represent acceleration, velocity, and position respectively.
+</p>
+</div>
+<div id="outline-container-org9eb7dd4" class="outline-3">
+<h3 id="org9eb7dd4"><span class="section-number-3">3.1.</span> Magnetic Actuation</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+The magnetic force acting on the beam is given by:
+</p>
+
+<p>
+\[F_{\text{magnetic}} = \chi B(t)^2 \cdot \mathbf{B}_{\text{direction}} \]
+</p>
+
+<p>
+where:
+</p>
+<dl class="org-dl">
+<dt>\(\chi\)</dt><dd>Magnetic susceptibility of the material</dd>
+<dt>\(B(t)\)</dt><dd>Time-dependent magnetic field strength given by \(B(t) = B_{\text{strength}} \sin(2\pi f t)\), where \(f\) is the driving frequency</dd>
+<dt>\(\mathbf{B}_{\text{direction}}\)</dt><dd>Unit vector specifying the direction of the magnetic field</dd>
+</dl>
+</div>
+</div>
+<div id="outline-container-org6947d33" class="outline-3">
+<h3 id="org6947d33"><span class="section-number-3">3.2.</span> Solution by Implicit Euler Method</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+The time integration is performed using the implicit Euler scheme:
+</p>
+
+\begin{align*}
+q(t_{k+1}) &= q(t_k) + \dot{q}(t_{k+1}) \Delta t \\
+\dot{q}(t_{k+1}) &= \dot{q}(t_k) + \ddot{q}(t_{k+1}) \Delta t
+\end{align*}
+
+<p>
+where \(\Delta t\) is the timestep and subscripts \(k\) and \(k+1\) denote the current and next time levels respectively.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org59aef21" class="outline-2">
+<h2 id="org59aef21"><span class="section-number-2">4.</span> 1D Implementations</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-org5e5ba2d" class="outline-3">
+<h3 id="org5e5ba2d"><span class="section-number-3">4.1.</span> Numerical Framework</h3>
+<div class="outline-text-3" id="text-4-1">
+</div>
+<div id="outline-container-org773c3a5" class="outline-4">
+<h4 id="org773c3a5"><span class="section-number-4">4.1.1.</span> Physical Model and Discretization</h4>
+<div class="outline-text-4" id="text-4-1-1">
+<p>
+The 1D cantilever beam is modeled as a discrete system of \(n\) point masses connected by linear spring-damper elements. This approach, known as the <b>lumped mass method</b>, is a fundamental technique in computational mechanics for discretizing continuous structures.
+</p>
+
+<p>
+<b>Geometry Setup:</b>
+The beam is initially straight and horizontal, with nodes uniformly distributed along the x-axis from the fixed end (at \(x=0\)) to the free end (at \(x=L_0 = 1.0\) m). The $i$-th node is located at position:
+</p>
+
+<p>
+\[\mathbf{x}_i^{(0)} = [(i-1) \times 0.1, 0.0]^T \quad \text{for} \quad i = 1, 2, \ldots, 11\]
+</p>
+
+<p>
+Each node \(i\) has associated with it:
+</p>
+<ul class="org-ul">
+<li>Position vector: \(\mathbf{q}_i(t) \in \mathbb{R}^2\) (coordinates in 2D physical space: x and y)</li>
+<li>Velocity vector: \(\dot{\mathbf{q}}_i(t) \in \mathbb{R}^2\) (time derivative of position)</li>
+<li>Acceleration vector: \(\ddot{\mathbf{q}}_i(t) \in \mathbb{R}^2\) (time derivative of velocity)</li>
+<li>Lumped mass: \(m_i = 1.0\) kg (concentrated point mass)</li>
+</ul>
+
+<p>
+<b>Connectivity Model:</b>
+Adjacent nodes are connected by linear spring-damper elements (also called Kelvin-Voigt elements). An edge connects nodes \(i\) and \(i+1\) for \(i = 1, 2, \ldots, 10\). This creates 10 spring-damper pairs linking the 11 nodes.
+</p>
+</div>
+</div>
+<div id="outline-container-orgdef3f86" class="outline-4">
+<h4 id="orgdef3f86"><span class="section-number-4">4.1.2.</span> Force Components and Governing Equations</h4>
+<div class="outline-text-4" id="text-4-1-2">
+<p>
+For each free node (nodes not fixed to a boundary), the equation of motion follows Newton's second law:
+</p>
+
+<p>
+\[m_i \ddot{\mathbf{q}}_i = \mathbf{F}_{\text{spring},i} + \mathbf{F}_{\text{mag},i} + \mathbf{F}_{\text{grav},i}\]
+</p>
+
+<p>
+The three force components are:
+</p>
+
+<p>
+<b>1. Spring Force (\(\mathbf{F}_{\text{spring},i}\)):</b>
+</p>
+
+<p>
+Spring forces arise from the elastic deformation of elements connecting adjacent nodes. For an edge between nodes \(i\) and \(j\), the spring force depends on the deviation from the rest length:
+</p>
+
+<p>
+\[\mathbf{F}_{\text{spring}} = k \frac{L - L_0}{L} \mathbf{r}\]
+</p>
+
+<p>
+where:
+</p>
+<ul class="org-ul">
+<li>\(k = 10^4\) N/m is the spring stiffness constant</li>
+<li>\(\mathbf{r} = \mathbf{q}_j - \mathbf{q}_i\) is the displacement vector between nodes</li>
+<li>\(L = \|\mathbf{r}\| = \sqrt{r_x^2 + r_y^2}\) is the current length</li>
+<li>\(L_0 = 0.1\) m is the rest (unstretched) length</li>
+</ul>
+
+<p>
+The term \(\frac{L - L_0}{L}\) represents the strain ratio: positive when stretched (\(L > L_0\)), negative when compressed (\(L < L_0\)). The force acts along the direction of \(\mathbf{r}\), pulling nodes together when stretched and pushing them apart when compressed.
+</p>
+
+<p>
+For node \(i\), the total spring force is the sum of contributions from both adjacent springs:
+\[\mathbf{F}_{\text{spring},i} = \sum_{\text{adjacent nodes } j} k \frac{L_{ij} - L_{0}}{L_{ij}} \mathbf{r}_{ij}\]
+</p>
+
+<p>
+<b>2. Gravitational Force (\(\mathbf{F}_{\text{grav},i}\)):</b>
+</p>
+
+<p>
+Each node experiences a downward gravitational force:
+</p>
+
+<p>
+\[\mathbf{F}_{\text{grav},i} = m_i \mathbf{g} = m_i \begin{bmatrix} 0 \\ -9.81 \end{bmatrix} \text{ N}\]
+</p>
+
+<p>
+This creates a distributed load along the entire beam, causing downward deflection in the absence of other supporting forces.
+</p>
+
+<p>
+<b>3. Magnetic Force (\(\mathbf{F}_{\text{mag},i}\)):</b>
+</p>
+
+<p>
+The magnetic force is applied only at the free end (node 11, the rightmost node):
+</p>
+
+<p>
+\[\mathbf{F}_{\text{mag}} = \chi \mathbf{B}_{\text{direction}}\]
+</p>
+
+<p>
+where:
+</p>
+<ul class="org-ul">
+<li>\(\chi = 50\) is the magnetic moment magnitude (dimensionless in this simplified model)</li>
+<li>\(\mathbf{B}_{\text{direction}}\) is a unit vector specifying the direction of the applied field</li>
+</ul>
+
+<p>
+This force creates lateral loading that deflects the free end in the specified direction. Unlike gravitational force which is distributed, the magnetic force is concentrated at a single point.
+</p>
+</div>
+</div>
+<div id="outline-container-org94a9ded" class="outline-4">
+<h4 id="org94a9ded"><span class="section-number-4">4.1.3.</span> Damping Model</h4>
+<div class="outline-text-4" id="text-4-1-3">
+<p>
+Damping dissipates energy from the system, preventing indefinite oscillation and modeling physical energy losses. In this implementation, velocity-proportional damping is applied at each time step:
+</p>
+
+<p>
+\[\mathbf{v}_i^{\text{new}} = c_d \cdot \mathbf{v}_i^{\text{old}}\]
+</p>
+
+<p>
+where \(c_d \in [0.5, 1.0]\) is the damping coefficient:
+</p>
+<ul class="org-ul">
+<li>\(c_d = 0.5\) represents high energy dissipation (heavily damped system)</li>
+<li>\(c_d = 0.9\) represents moderate damping (typical structural damping)</li>
+<li>\(c_d = 1.0\) represents no damping (undamped system)</li>
+</ul>
+
+<p>
+This multiplicative damping is applied <b>after</b> velocity updates and effectively scales down velocities each timestep, simulating viscous friction and material internal dissipation.
+</p>
+</div>
+</div>
+<div id="outline-container-org9b9182b" class="outline-4">
+<h4 id="org9b9182b"><span class="section-number-4">4.1.4.</span> Time Integration Scheme</h4>
+<div class="outline-text-4" id="text-4-1-4">
+<p>
+The simulation advances in time using explicit Euler integration with adaptive damping:
+</p>
+
+<p>
+<b>Step 1 - Compute all forces:</b>
+For each node, calculate the total force by summing spring, magnetic, and gravitational contributions:
+</p>
+
+<p>
+\[\mathbf{F}_i^{(k)} = \mathbf{F}_{\text{spring},i} + \mathbf{F}_{\text{mag},i} + \mathbf{F}_{\text{grav},i}\]
+</p>
+
+<p>
+<b>Step 2 - Update velocity:</b>
+Using Newton's second law (\(\mathbf{F} = m\mathbf{a}\)), compute the new velocity:
+</p>
+
+<p>
+\[\dot{\mathbf{q}}_i^{(k+1)} = \dot{\mathbf{q}}_i^{(k)} + \frac{\mathbf{F}_i^{(k)}}{m_i} \Delta t\]
+</p>
+
+<p>
+where \(\Delta t = 0.001\) s is the timestep.
+</p>
+
+<p>
+<b>Step 3 - Apply damping:</b>
+\[\dot{\mathbf{q}}_i^{(k+1)} \leftarrow c_d \cdot \dot{\mathbf{q}}_i^{(k+1)}\]
+</p>
+
+<p>
+<b>Step 4 - Update position:</b>
+\[\mathbf{q}_i^{(k+1)} = \mathbf{q}_i^{(k)} + \dot{\mathbf{q}}_i^{(k+1)} \Delta t\]
+</p>
+
+<p>
+<b>Step 5 - Apply boundary conditions:</b>
+For the fixed node (node 1):
+\[\mathbf{q}_1^{(k+1)} = \mathbf{q}_1^{(0)} = [0, 0]^T \quad \text{(remains at origin)}\]
+</p>
+
+<p>
+This sequence repeats for \(N = 1000\) timesteps, providing a total simulation duration of \(T = N \times \Delta t = 1.0\) second.
+</p>
+</div>
+</div>
+<div id="outline-container-org63e7028" class="outline-4">
+<h4 id="org63e7028"><span class="section-number-4">4.1.5.</span> Equilibrium and Steady State</h4>
+<div class="outline-text-4" id="text-4-1-5">
+<p>
+As the simulation progresses, the beam evolves from its initial straight configuration toward an equilibrium state where forces balance. The damping term ensures convergence to this equilibrium rather than oscillation. The equilibrium deflection depends on:
+</p>
+<ul class="org-ul">
+<li><b><b>Stiffness effects</b></b>: Higher \(k\) resists deformation → smaller deflections</li>
+<li><b><b>Loading effects</b></b>: Larger magnetic moment \(\chi\) causes larger deflections</li>
+<li><b><b>Damping effects</b></b>: Higher damping \(c_d\) dissipates energy faster, reaching equilibrium quicker</li>
+</ul>
+
+<p>
+The plots show the final deformed configuration after transient effects have dissipated.
+</p>
+</div>
+</div>
+<div id="outline-container-orgfb7fd32" class="outline-4">
+<h4 id="orgfb7fd32"><span class="section-number-4">4.1.6.</span> Physical Interpretation of Results</h4>
+<div class="outline-text-4" id="text-4-1-6">
+<p>
+The numerical simulations reveal several key phenomena:
+</p>
+
+<ol class="org-ol">
+<li><b>Directional coupling</b>: The beam deflects along the combined direction of gravitational (downward) and magnetic (lateral) loading, with the magnitude determined by the relative strength of these forces.</li>
+
+<li><b>Nonlinear geometric effects</b>: The spring forces depend on the current configuration through the term \(\frac{L - L_0}{L}\), creating geometric nonlinearity. Large deflections exhibit stronger resistance to further deformation.</li>
+
+<li><b>Stiffness sensitivity</b>: Spring stiffness \(k\) is a primary control parameter. Soft springs (\(k = 10^3\)) permit large deflections, while stiff springs (\(k = 10^5\)) keep the beam nearly straight despite applied loads.</li>
+
+<li><b>Damping effects</b>: The damping coefficient affects the rate of energy dissipation but not the final equilibrium deflection magnitude significantly—it mainly influences the transient response.</li>
+</ol>
+
+<p>
+<b>Analysis Strategy:</b> To investigate the beam's response to magnetic actuation from different directions, the magnetic field direction vector \(\mathbf{B}_{\text{direction}}\) is varied systematically while maintaining constant field magnitude. This allows characterization of the beam's directional sensitivity and the nonlinear coupling between gravitational and magnetic loading.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orgeab0352" class="outline-3">
+<h3 id="orgeab0352"><span class="section-number-3">4.2.</span> Implementations</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+The system parameters employed in the 1D analysis are:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Parameter</th>
+<th scope="col" class="org-left">Symbol</th>
+<th scope="col" class="org-left">Value</th>
+<th scope="col" class="org-left">Unit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Spring stiffness</td>
+<td class="org-left">\(k\)</td>
+<td class="org-left">\(10^4\)</td>
+<td class="org-left">N/m</td>
+</tr>
+
+<tr>
+<td class="org-left">Damping coefficient</td>
+<td class="org-left">\(c\)</td>
+<td class="org-left">\(0.9\)</td>
+<td class="org-left">-</td>
+</tr>
+
+<tr>
+<td class="org-left">Magnetic susceptibility</td>
+<td class="org-left">\(\chi\)</td>
+<td class="org-left">\(50\)</td>
+<td class="org-left">-</td>
+</tr>
+
+<tr>
+<td class="org-left">Node mass</td>
+<td class="org-left">\(m_i\)</td>
+<td class="org-left">\(1.0\)</td>
+<td class="org-left">kg</td>
+</tr>
+
+<tr>
+<td class="org-left">Gravity</td>
+<td class="org-left">\(g\)</td>
+<td class="org-left">\(9.81\)</td>
+<td class="org-left">m/s²</td>
+</tr>
+
+<tr>
+<td class="org-left">Timestep</td>
+<td class="org-left">\(\Delta t\)</td>
+<td class="org-left">\(0.001\)</td>
+<td class="org-left">s</td>
+</tr>
+
+<tr>
+<td class="org-left">Number of nodes</td>
+<td class="org-left">\(n\)</td>
+<td class="org-left">\(11\)</td>
+<td class="org-left">-</td>
+</tr>
+
+<tr>
+<td class="org-left">Total simulation time</td>
+<td class="org-left">\(T\)</td>
+<td class="org-left">\(1.0\)</td>
+<td class="org-left">s</td>
+</tr>
+
+<tr>
+<td class="org-left">Initial beam length</td>
+<td class="org-left">\(L_0\)</td>
+<td class="org-left">\(1.0\)</td>
+<td class="org-left">m</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="outline-container-orgd195042" class="outline-4">
+<h4 id="orgd195042"><span class="section-number-4">4.2.1.</span> Direction</h4>
+<div class="outline-text-4" id="text-4-2-1">
+<ol class="org-ol">
+<li>Magnetic Field Direction: \([1.0, 1.0]\) (Northeast)</li>
+</ol>
+
+<div id="org204b33b" class="figure">
+<p><img src="./1d_sample1.png" alt="1d_sample1.png" />
+</p>
+<p><span class="figure-number">Figure 1: </span>Beam deflection with northeast magnetic loading</p>
+</div>
+<ol class="org-ol">
+<li>Magnetic Field Direction: \([-1.0, 1.0]\) (Northwest)</li>
+</ol>
+
+<div id="orga484b34" class="figure">
+<p><img src="./1d_sample2.png" alt="1d_sample2.png" />
+</p>
+<p><span class="figure-number">Figure 2: </span>Beam deflection with northwest magnetic loading</p>
+</div>
+<ol class="org-ol">
+<li>Magnetic Field Direction: \([1.0, -1.0]\) (Southeast)</li>
+</ol>
+
+<div id="org0313fce" class="figure">
+<p><img src="./1d_sample3.png" alt="1d_sample3.png" />
+</p>
+<p><span class="figure-number">Figure 3: </span>Beam deflection with southeast magnetic loading</p>
+</div>
+<ol class="org-ol">
+<li>Magnetic Field Direction: \([-1.0, -1.0]\) (Southwest)</li>
+</ol>
+
+<div id="org7994208" class="figure">
+<p><img src="./1d_sample4.png" alt="1d_sample4.png" />
+</p>
+<p><span class="figure-number">Figure 4: </span>Beam deflection with southwest magnetic loading</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orga3a3696" class="outline-4">
+<h4 id="orga3a3696"><span class="section-number-4">4.2.2.</span> Intensity of Magnetic Field</h4>
+<div class="outline-text-4" id="text-4-2-2">
+
+<div id="orga715a43" class="figure">
+<p><img src="./beam_deflection_all_moments.png" alt="beam_deflection_all_moments.png" />
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org4a657b3" class="outline-4">
+<h4 id="org4a657b3"><span class="section-number-4">4.2.3.</span> Spring stiffness variation: \(k \in [10^3, 10^5]\) N/m</h4>
+<div class="outline-text-4" id="text-4-2-3">
+
+<div id="org58c4b52" class="figure">
+<p><img src="./beam_deflection_stiffness_comparison.png" alt="beam_deflection_stiffness_comparison.png" />
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org9b822ad" class="outline-4">
+<h4 id="org9b822ad"><span class="section-number-4">4.2.4.</span> Damping coefficient sensitivity: \(c \in [0.5, 1.0]\)</h4>
+<div class="outline-text-4" id="text-4-2-4">
+
+<div id="orgf09f028" class="figure">
+<p><img src="./beam_deflection_damping_comparison.png" alt="beam_deflection_damping_comparison.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org86fd6f8" class="outline-2">
+<h2 id="org86fd6f8"><span class="section-number-2">5.</span> <span class="todo TODO">TODO</span> 2D Implementations</h2>
+<div class="outline-text-2" id="text-5">
+</div>
+<div id="outline-container-org4256afe" class="outline-3">
+<h3 id="org4256afe"><span class="section-number-3">5.1.</span> Computational Nodes</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+The following assumptions have been made in the 2D structural model:
+</p>
+<ul class="org-ul">
+<li>The material is homogeneous and can be modeled as point masses connected to each other by springs and dampers</li>
+<li>Each node has 2 degrees of freedom in the 2D plane</li>
+<li>The connectivity follows a regular mesh topology as shown below</li>
+</ul>
+
+
+<div id="orga587fc4" class="figure">
+<p><img src="./2d.png" alt="2d.png" />
+</p>
+<p><span class="figure-number">Figure 5: </span>2D mesh discretization with point mass and spring-damper model</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc3511e6" class="outline-3">
+<h3 id="orgc3511e6"><span class="section-number-3">5.2.</span> Plots</h3>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2025-11-25 Tue 16:25</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
